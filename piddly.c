@@ -1,9 +1,9 @@
 /*
- * piddle : a little PID controller
+ * piddly : a little PID controller
  * Copyright © Darren Kulp, darren@kulp.ch
  */
 
-#include "piddle.h"
+#include "piddly.h"
 
 #define PASTE(X,Y) PASTE_(X,Y)
 #define PASTE_(X,Y) X ## Y

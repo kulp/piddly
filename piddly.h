@@ -1,5 +1,5 @@
 /*
- * piddle : a little PID controller
+ * piddly : a little PID controller
  * Copyright © Darren Kulp, darren@kulp.ch
  */
 
