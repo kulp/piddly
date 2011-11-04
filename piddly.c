@@ -5,6 +5,8 @@
 
 #include "piddly.h"
 
+#define OP(Type,Op,Args) op_##Type##_##Op Args
+
 #define op_float_add(x,y) ((x) + (y))
 #define op_float_sub(x,y) ((x) - (y))
 #define op_float_mul(x,y) ((x) * (y))
@@ -52,20 +54,20 @@ int pid_loop(pid_t pid, pid_measure *want, pid_measure *get, pid_control *set)
     while (!want(pid, &sp) && !get(pid, &pv)) {
         struct pid_impl *P = pid->impl;
 
-        pid_value e  = op_float_sub(sp, pv);
-        pid_value pe = op_float_mul(P->p, e);
-        pid_value ie = op_float_mul(P->i, P->Se);
-        pid_value de = op_float_mul(P->d, op_float_sub(e, P->le[P->lei]));
+        pid_value e  = OP(float,sub,(sp, pv));
+        pid_value pe = OP(float,mul,(P->p, e));
+        pid_value ie = OP(float,mul,(P->i, P->Se));
+        pid_value de = OP(float,mul,(P->d, OP(float,sub,(e, P->le[P->lei]))));
 
         pid_value mv;
 
         if (P->lei == -1) de = 0; /* start condition */
 
-        mv = op_float_add(pe, op_float_add(ie, de));
+        mv = OP(float,add,(pe, OP(float,add,(ie, de))));
 
         set(pid, mv);
 
-        P->Se = op_float_add(P->Se, e);
+        P->Se = OP(float,add,(P->Se, e));
         P->lei = (P->lei + 1) % countof(P->le);
         P->le[P->lei] = e;
     }
