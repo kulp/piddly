@@ -6,13 +6,13 @@
 #ifndef PIDDLE_H_
 #define PIDDLE_H_
 
+typedef float pid_coeff; /*< coefficient to P, I, D */
+typedef float pid_value; /*< Process Value or Manipulated Value */
+
 typedef struct {
 	struct pid_impl *impl;
 	char _priv[64];
 } pid_t[1], *pid_tp;
-
-typedef float pid_coeff; ///< coefficient to P, I, D
-typedef float pid_value; ///< Process Value or Manipulated Value
 
 typedef int pid_measure(pid_t pid, pid_value *pv);
 typedef int pid_control(pid_t pid, pid_value mv);
