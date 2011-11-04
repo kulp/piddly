@@ -5,6 +5,10 @@
 
 #include "piddly.h"
 
+#define op_float_add(x,y) ((x) + (y))
+#define op_float_sub(x,y) ((x) - (y))
+#define op_float_mul(x,y) ((x) * (y))
+
 #define PASTE(X,Y) PASTE_(X,Y)
 #define PASTE_(X,Y) X ## Y
 
@@ -48,20 +52,20 @@ int pid_loop(pid_t pid, pid_measure *want, pid_measure *get, pid_control *set)
     while (!want(pid, &sp) && !get(pid, &pv)) {
         struct pid_impl *P = pid->impl;
 
-        pid_value e  = sp - pv;
-        pid_value pe = P->p * e;
-        pid_value ie = P->i * P->Se;
-        pid_value de = P->d * (e - P->le[P->lei]);
+        pid_value e  = op_float_sub(sp, pv);
+        pid_value pe = op_float_mul(P->p, e);
+        pid_value ie = op_float_mul(P->i, P->Se);
+        pid_value de = op_float_mul(P->d, op_float_sub(e, P->le[P->lei]));
 
         pid_value mv;
 
         if (P->lei == -1) de = 0; /* start condition */
 
-        mv = pe + ie + de;
+        mv = op_float_add(pe, op_float_add(ie, de));
 
         set(pid, mv);
 
-        P->Se += e;
+        P->Se = op_float_add(P->Se, e);
         P->lei = (P->lei + 1) % countof(P->le);
         P->le[P->lei] = e;
     }
