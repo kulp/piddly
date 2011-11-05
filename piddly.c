@@ -1,6 +1,6 @@
 /*
  * piddly : a little PID controller
- * Copyright © Darren Kulp, darren@kulp.ch
+ * Copyright © 2011 Darren Kulp, darren@kulp.ch
  */
 
 #include "piddly.h"
