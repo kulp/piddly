@@ -8,7 +8,7 @@
 #define PASTE(X,Y) PASTE_(X,Y)
 #define PASTE_(X,Y) X ## Y
 
-#define OP(Type,Op,Args) PASTE(op_,PASTE(Type,PASTE(_,Op))) Args
+#define OP(Op,Args) PASTE(op_,PASTE(pid_value,PASTE(_,Op))) Args
 
 #define op_float_add(x,y) ((x) + (y))
 #define op_float_sub(x,y) ((x) - (y))
@@ -63,20 +63,20 @@ int pid_loop(pid_t pid, pid_measure *want, pid_measure *get, pid_control *set)
     while (!want(pid, &sp) && !get(pid, &pv)) {
         struct pid_impl *P = pid->impl;
 
-        pid_value e  = OP(pid_value,sub,(sp, pv));
-        pid_value pe = OP(pid_value,mul,(P->p, e));
-        pid_value ie = OP(pid_value,mul,(P->i, P->Se));
-        pid_value de = OP(pid_value,mul,(P->d, OP(pid_value,sub,(e, P->le[P->lei]))));
+        pid_value e  = OP(sub,(sp, pv));
+        pid_value pe = OP(mul,(P->p, e));
+        pid_value ie = OP(mul,(P->i, P->Se));
+        pid_value de = OP(mul,(P->d, OP(sub,(e, P->le[P->lei]))));
 
         pid_value mv;
 
         if (P->lei == -1) de = 0; /* start condition */
 
-        mv = OP(pid_value,add,(pe, OP(pid_value,add,(ie, de))));
+        mv = OP(add,(pe, OP(add,(ie, de))));
 
         set(pid, mv);
 
-        P->Se = OP(pid_value,add,(P->Se, e));
+        P->Se = OP(add,(P->Se, e));
         P->lei = (P->lei + 1) % countof(P->le);
         P->le[P->lei] = e;
     }
