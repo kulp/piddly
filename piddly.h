@@ -23,6 +23,7 @@ typedef int pid_measure(pid_t pid, pid_value *pv);
 typedef int pid_control(pid_t pid, pid_value mv);
 
 int pid_init(pid_t pid, pid_coeff p, pid_coeff i, pid_coeff d);
+int pid_iter(pid_t pid, pid_value pv, pid_value sp, pid_control *set);
 int pid_loop(pid_t pid, pid_measure *want, pid_measure *get, pid_control *set);
 
 #endif

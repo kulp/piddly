@@ -91,7 +91,10 @@ static int input_val(pid_t pid, pid_value *pv)
 int main(int argc, char *argv[])
 {
     pid_t pid;
-    pid_init(pid, 1 << 15, 1 << 14, 1 << 13);
+    /*
+    pid_init(pid, 0.5, 0.05, 0.01);
+     */
+    pid_init(pid, 1 << 15, 1 << 12, 1 << 11);
     pid_loop(pid, want_val, input_val, output_val);
 
     return 0;

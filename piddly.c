@@ -35,7 +35,7 @@ struct pid_impl {
     pid_coeff d;        /*< coefficient for derivative   term */
 
     pid_value Se;       /*< sum of errors */
-    pid_value le[2];    /*< last error circular buffer */
+    pid_value le[10];   /*< last error circular buffer */
     int lei;            /*< last error index */
 };
 
@@ -44,6 +44,7 @@ STATIC_ASSERT(sizeof(struct pid_impl) <= sizeof(example->_priv));
 int pid_init(pid_t pid, pid_coeff p, pid_coeff i, pid_coeff d)
 {
     struct pid_impl *P = pid->impl = (void*)pid->_priv;
+    unsigned u;
 
     P->p = p;
     P->i = i;
@@ -52,35 +53,49 @@ int pid_init(pid_t pid, pid_coeff p, pid_coeff i, pid_coeff d)
     P->Se  =  0;
     P->lei = -1;
 
+    for (u = 0; u < countof(P->le); u++)
+        P->le[u] = 0;
+
     return 0;
+}
+
+int pid_iter(pid_t pid, pid_value pv, pid_value sp, pid_control *set)
+{
+    int rc;
+
+    struct pid_impl *P = pid->impl;
+
+    pid_value e  = OP(sub,(sp, pv));
+    pid_value pe = OP(mul,(P->p, e));
+    pid_value ie = OP(mul,(P->i, P->Se));
+    pid_value de = OP(mul,(P->d, OP(sub,(e, P->le[P->lei]))));
+
+    pid_value mv;
+
+    if (P->lei == -1) de = 0; /* start condition */
+
+    mv = OP(add,(pe, OP(add,(ie, de))));
+
+    rc = set(pid, mv);
+
+    P->lei = (P->lei + 1) % countof(P->le);
+    P->Se = OP(sub,(OP(add,(P->Se, e)),P->le[P->lei]));
+    P->le[P->lei] = e;
+
+    return rc;
 }
 
 int pid_loop(pid_t pid, pid_measure *want, pid_measure *get, pid_control *set)
 {
+    int rc = 0;
+
     pid_value pv = 0,
               sp = 0;
 
-    while (!want(pid, &sp) && !get(pid, &pv)) {
-        struct pid_impl *P = pid->impl;
-
-        pid_value e  = OP(sub,(sp, pv));
-        pid_value pe = OP(mul,(P->p, e));
-        pid_value ie = OP(mul,(P->i, P->Se));
-        pid_value de = OP(mul,(P->d, OP(sub,(e, P->le[P->lei]))));
-
-        pid_value mv;
-
-        if (P->lei == -1) de = 0; /* start condition */
-
-        mv = OP(add,(pe, OP(add,(ie, de))));
-
-        set(pid, mv);
-
-        P->Se = OP(add,(P->Se, e));
-        P->lei = (P->lei + 1) % countof(P->le);
-        P->le[P->lei] = e;
+    while (!rc && !want(pid, &sp) && !get(pid, &pv)) {
+        rc = pid_iter(pid, pv, sp, set);
     }
 
-    return 0;
+    return rc;
 }
 
