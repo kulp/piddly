@@ -5,14 +5,22 @@
 
 #include "piddly.h"
 
-#define OP(Type,Op,Args) op_##Type##_##Op Args
+#define PASTE(X,Y) PASTE_(X,Y)
+#define PASTE_(X,Y) X ## Y
+
+#define OP(Type,Op,Args) PASTE(op_,PASTE(Type,PASTE(_,Op))) Args
 
 #define op_float_add(x,y) ((x) + (y))
 #define op_float_sub(x,y) ((x) - (y))
 #define op_float_mul(x,y) ((x) * (y))
 
-#define PASTE(X,Y) PASTE_(X,Y)
-#define PASTE_(X,Y) X ## Y
+#define op_double_add(x,y) ((x) + (y))
+#define op_double_sub(x,y) ((x) - (y))
+#define op_double_mul(x,y) ((x) * (y))
+
+#define op_fix16p16_add(x,y) ((x) + (y))
+#define op_fix16p16_sub(x,y) ((x) - (y))
+#define op_fix16p16_mul(x,y) (((uint64_t)(x) * (uint64_t)(y)) >> 16)
 
 #define STATIC_ASSERT(Cond) \
     typedef int PASTE(assert_type_,__LINE__)[(Cond) ? 1 : -1]
@@ -41,6 +49,7 @@ int pid_init(pid_t pid, pid_coeff p, pid_coeff i, pid_coeff d)
     P->i = i;
     P->d = d;
 
+    P->Se  =  0;
     P->lei = -1;
 
     return 0;
@@ -54,20 +63,20 @@ int pid_loop(pid_t pid, pid_measure *want, pid_measure *get, pid_control *set)
     while (!want(pid, &sp) && !get(pid, &pv)) {
         struct pid_impl *P = pid->impl;
 
-        pid_value e  = OP(float,sub,(sp, pv));
-        pid_value pe = OP(float,mul,(P->p, e));
-        pid_value ie = OP(float,mul,(P->i, P->Se));
-        pid_value de = OP(float,mul,(P->d, OP(float,sub,(e, P->le[P->lei]))));
+        pid_value e  = OP(pid_value,sub,(sp, pv));
+        pid_value pe = OP(pid_value,mul,(P->p, e));
+        pid_value ie = OP(pid_value,mul,(P->i, P->Se));
+        pid_value de = OP(pid_value,mul,(P->d, OP(pid_value,sub,(e, P->le[P->lei]))));
 
         pid_value mv;
 
         if (P->lei == -1) de = 0; /* start condition */
 
-        mv = OP(float,add,(pe, OP(float,add,(ie, de))));
+        mv = OP(pid_value,add,(pe, OP(pid_value,add,(ie, de))));
 
         set(pid, mv);
 
-        P->Se = OP(float,add,(P->Se, e));
+        P->Se = OP(pid_value,add,(P->Se, e));
         P->lei = (P->lei + 1) % countof(P->le);
         P->le[P->lei] = e;
     }

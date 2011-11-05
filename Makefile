@@ -1,5 +1,6 @@
+CFLAGS += -g
 CFLAGS += -std=c89 -ansi -pedantic-errors
-CFLAGS += -Wall -Wextra -Werror -Wno-unused-parameter
+CFLAGS += -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-function
 
 all: main
 

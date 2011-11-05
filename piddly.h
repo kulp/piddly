@@ -6,8 +6,13 @@
 #ifndef PIDDLE_H_
 #define PIDDLE_H_
 
-typedef float pid_coeff; /*< coefficient to P, I, D */
-typedef float pid_value; /*< Process Value or Manipulated Value */
+#include <stdint.h>
+
+typedef int32_t fix16p16;
+
+/* using #define instead of typedef is intentional here */
+#define pid_coeff fix16p16 /*< coefficient to P, I, D */
+#define pid_value fix16p16 /*< Process Value or Manipulated Value */
 
 typedef struct {
 	struct pid_impl *impl;
